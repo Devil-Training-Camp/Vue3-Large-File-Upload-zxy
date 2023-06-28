@@ -1,10 +1,10 @@
 <template>
   <el-tabs v-model="activeName" class="demo-tabs">
     <el-tab-pane label="单文件上传[FORM-DATA]" name="first">
-      <UploadFile />
+      <UploadFileFormData />
     </el-tab-pane>
     <el-tab-pane label="单文件上传[BASE64]" name="second">
-      <UploadFileFormData />
+      <UploadFileBase64 />
     </el-tab-pane>
     <el-tab-pane label="单文件上传[缩略图处理]" name="third"
       >Config</el-tab-pane
@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UploadFile from './components/UploadFile/index.vue'
 import UploadFileFormData from './components/UploadFileFormData.vue'
+import UploadFileBase64 from './components/UploadFileBase64.vue'
 
 const activeName = ref('first')
 </script>
