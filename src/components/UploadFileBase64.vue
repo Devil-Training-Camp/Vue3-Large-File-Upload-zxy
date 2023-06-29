@@ -55,7 +55,7 @@ const handleUpload = async () => {
     }
   )
   if (res.code === 0) {
-    alert(res.codeText)
+    alert(res.message)
   }
 }
 const handleDelete = () => {

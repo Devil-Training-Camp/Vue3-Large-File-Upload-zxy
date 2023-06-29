@@ -78,9 +78,9 @@ const handleUpload = async () => {
       .then((res) => {
         if (res.code === 0) {
           progress[index].state = 'success'
-          return Promise.resolve(res.codeText)
+          return Promise.resolve(res.message)
         }
-        return Promise.reject(res.codeText)
+        return Promise.reject(res.message)
       })
   })
   Promise.all(filesRequest).then(() => {

@@ -45,7 +45,7 @@ const handleUpload = async () => {
   formData.append('filename', data.files.name)
   const res = await request.post('/upload_single', formData)
   if (res.code === 0) {
-    alert(res.codeText)
+    alert(res.message)
   }
 }
 const handleDelete = () => {
