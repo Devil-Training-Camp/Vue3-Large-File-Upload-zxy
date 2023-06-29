@@ -10,11 +10,16 @@ declare module 'vue' {
     copy: typeof import('./src/components/UploadFileFormData copy.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElProgress: typeof import('element-plus/es')['ElProgress']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     IEpDeleteFilled: typeof import('~icons/ep/delete-filled')['default']
     UploadFile: typeof import('./src/components/UploadFile/index.vue')['default']
     UploadFileBase64: typeof import('./src/components/UploadFileBase64.vue')['default']
     UploadFileFormData: typeof import('./src/components/UploadFileFormData.vue')['default']
+    UploadFileLarge: typeof import('./src/components/UploadFileLarge.vue')['default']
+    UploadFileMultiple: typeof import('./src/components/UploadFileMultiple.vue')['default']
+    UploadFileProgress: typeof import('./src/components/UploadFileProgress.vue')['default']
+    UploadFileThumbnail: typeof import('./src/components/UploadFileThumbnail.vue')['default']
   }
 }

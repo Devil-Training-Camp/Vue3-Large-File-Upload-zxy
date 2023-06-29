@@ -1,21 +1,21 @@
 <template>
+  <!-- Base64 -->
   <div>
     <div>
       <input type="file" @change="handleChange" ref="inputRef" class="input" />
       <el-button type="primary" @click="handleSelect">选择文件</el-button>
-      <el-button type="primary" @click="handleUpload">上传</el-button>
-    </div>
-    <div>
-      <div
-        v-for="(key, index) in Object.keys(data.files)"
-        :key="index"
-        class="file-wrapper"
+      <el-button
+        type="primary"
+        @click="handleUpload"
+        :disabled="!data.files.name"
+        >上传</el-button
       >
-        <span>{{ data.files[key].name }}</span>
-        <el-icon class="icon" @click="handleDelete(index)"
-          ><i-ep-deleteFilled
-        /></el-icon>
-      </div>
+    </div>
+    <div class="file-wrapper" v-if="data.files.name">
+      <span>{{ data.files.name }}</span>
+      <el-icon class="icon" @click="handleDelete">
+        <i-ep-deleteFilled />
+      </el-icon>
     </div>
   </div>
 </template>
@@ -26,25 +26,22 @@ import { ref, reactive } from 'vue'
 
 const inputRef = ref()
 const data = reactive({
-  files: [],
+  files: {},
 })
 
 const handleChange = () => {
-  console.log('change')
   const files = inputRef.value.files
-  if (!data) return
+  if (!files) return
   // 是否限制文件上传的格式
   // 是否限制文件上传的大小
-  data.files = [...files]
+  data.files = files[0]
 }
 const handleSelect = () => {
   inputRef.value.click()
-  console.log(inputRef.value.files)
 }
 const handleUpload = async () => {
-  const file = data.files[0]
+  const file = data.files
   const base64 = await changeBase64(file)
-  console.log('base64', base64)
   const res = await request.post(
     '/upload_single_base64',
     {
@@ -59,12 +56,11 @@ const handleUpload = async () => {
   )
   if (res.code === 0) {
     alert(res.codeText)
-    data.files = []
   }
 }
-const handleDelete = (index) => {
-  inputRef.value.remove()
-  data.files.splice(index, 1)
+const handleDelete = () => {
+  inputRef.value.value = ''
+  data.files = {}
 }
 const changeBase64 = (file) => {
   return new Promise((resolve) => {

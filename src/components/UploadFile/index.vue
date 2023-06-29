@@ -12,9 +12,9 @@
         class="file-wrapper"
       >
         <span>{{ data.files[key].name }}</span>
-        <el-icon class="icon" @click="handleDelete(index)"
-          ><i-ep-deleteFilled
-        /></el-icon>
+        <el-icon class="icon" @click="handleDelete(index)">
+          <i-ep-deleteFilled />
+        </el-icon>
       </div>
     </div>
   </div>
