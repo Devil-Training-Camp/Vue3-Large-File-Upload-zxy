@@ -4,12 +4,7 @@
     <div>
       <input type="file" @change="handleChange" ref="inputRef" class="input" />
       <el-button type="primary" @click="handleSelect">选择文件</el-button>
-      <el-button
-        type="primary"
-        @click="handleUpload"
-        :disabled="!data.files.name"
-        >上传</el-button
-      >
+      <el-button type="primary" @click="handleUpload" :disabled="!data.files.name">上传</el-button>
     </div>
   </div>
 </template>

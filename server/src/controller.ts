@@ -4,13 +4,7 @@ import { Buffer } from 'node:buffer'
 import type { Request, Response } from 'express'
 import SparkMD5 from 'spark-md5'
 import { HOST_NAME, UPLOAD_DIR } from './constant'
-import {
-  extractExt,
-  isExists,
-  path2url,
-  useMultiParty,
-  writeFile,
-} from './utils'
+import { extractExt, isExists, path2url, useMultiParty, writeFile } from './utils'
 
 export async function uploadSingle(req: Request, res: Response) {
   try {
@@ -111,18 +105,15 @@ export async function uploadWithHashName(req: Request, res: Response) {
 }
 
 export function uploadAlready(req: Request, res: Response) {
-  const { HASH } = req.query
-
+  const { HASH } = req.body
   const pt = path.normalize(`${UPLOAD_DIR}/${HASH}`)
   let fileList: string[] = []
 
   try {
     if (fs.existsSync(pt)) {
       fileList = fs.readdirSync(pt)
-
-      // 因为前端对于切片命名是 `${hash}_{index + 1}${suffix}`
       fileList = fileList.sort((a, b) => {
-        const reg = /_(\d+)\./
+        let reg = /_(\d+)/
         return Number(reg.exec(a)![1]) - Number(reg.exec(b)![1])
       })
     }
@@ -211,15 +202,13 @@ export async function uploadChunk(req: Request, res: Response) {
 
 export async function mergeChunk(req: Request, res: Response) {
   const { HASH, count, suffix } = req.body
-  console.log(HASH, count, suffix)
   const hashDir = path.normalize(`${UPLOAD_DIR}/${HASH}`)
 
   if (!(await isExists(hashDir))) throw new Error('HASH path is not found!')
 
   const fileList = fs.readdirSync(hashDir)
 
-  if (fileList.length < count)
-    throw new Error('the slice has not been uploaded!')
+  if (fileList.length < count) throw new Error('the slice has not been uploaded!')
 
   fileList
     .sort((a, b) => {
@@ -227,10 +216,7 @@ export async function mergeChunk(req: Request, res: Response) {
       return Number(reg.exec(a)![1]) - Number(reg.exec(b)![1])
     })
     .forEach((file) => {
-      fs.appendFileSync(
-        `${UPLOAD_DIR}/${HASH}.${suffix}`,
-        fs.readFileSync(`${hashDir}/${file}`)
-      )
+      fs.appendFileSync(`${UPLOAD_DIR}/${HASH}.${suffix}`, fs.readFileSync(`${hashDir}/${file}`))
       fs.unlinkSync(`${hashDir}/${file}`)
     })
 

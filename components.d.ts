@@ -9,8 +9,10 @@ declare module 'vue' {
   export interface GlobalComponents {
     copy: typeof import('./src/components/UploadFileFormData copy.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCol: typeof import('element-plus/es')['ElCol']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElRow: typeof import('element-plus/es')['ElRow']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     IEpDeleteFilled: typeof import('~icons/ep/delete-filled')['default']
