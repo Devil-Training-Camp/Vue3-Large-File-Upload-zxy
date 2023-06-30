@@ -29,7 +29,7 @@
           <span>文件上传进度：</span>
         </el-col>
         <el-col :span="10">
-          <span>123</span>
+          <el-progress :percentage="totalProgress" :status="totalProgress === 100 ? 'success' : ''" />
         </el-col>
       </el-row>
       <div v-if="isUpload">
@@ -38,7 +38,7 @@
             <span>切片hash</span>
           </el-col>
           <el-col :span="10">
-            <span>上传进度</span>
+            <span>切片上传进度</span>
           </el-col>
           <el-col :span="2">
             <span>size(KB)</span>
@@ -75,7 +75,7 @@ const inputRef = ref()
 const isUpload = ref(false) // 是否上传中
 const isCalHash = ref(false) // 是否计算hash
 
-const { fileHashProgress, uploadFile, calculateHash, getFileHash, getHasUploadChunk, createChunk, mergeChunk } = useCommon()
+const { fileHashProgress, uploadFile, totalProgress, calculateHash, getHasUploadChunk, createChunk, mergeChunk } = useCommon()
 
 // 选择文件
 const handleSelect = () => {
@@ -85,7 +85,6 @@ const handleSelect = () => {
 // 保存文件
 const handleChange = () => {
   const file = inputRef.value.files
-  console.log('file', file)
   if (!file) return
   uploadFile.data = file[0]
 }
@@ -113,7 +112,6 @@ const handleUpload = async () => {
   // 开始上传
   isUpload.value = true
   const requestList = chunkList.map(async (chunk, index) => {
-    console.log(index, already.includes(chunk.filename))
     if (already.includes(chunk.filename)) {
       uploadFile.progress[index] = {
         percentage: 100,
@@ -128,7 +126,6 @@ const handleUpload = async () => {
       onUploadProgress: (e) => {
         const { loaded, total } = e
         uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
-        console.log('e', e, index, loaded, total)
         if (loaded === total) {
           uploadFile.progress[index].percentage = 100
           uploadFile.progress[index].status = 'success'

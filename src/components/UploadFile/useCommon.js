@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import SparkMD5 from 'spark-md5'
 import request from '@/utils/request.js'
 
@@ -17,6 +17,15 @@ const uploadFile = reactive({
   progress: []
 })
 
+const totalProgress = computed(() => {
+  const total = uploadFile.progress.length * 100
+  let load = 0
+  uploadFile.progress.forEach(item => {
+    load += item.percentage
+  })
+  return parseInt(load / total * 100)
+})
+
 const chunkSize = 50 * 1024 * 1024 // 切片大小为50M
 
 export default function useCommon() {
@@ -28,45 +37,21 @@ export default function useCommon() {
       worker.postMessage(file);
       worker.onmessage = e => {
         const { percentage, hash, suffix } = e.data;
-        fileHashProgress.percentage = percentage
-        if(percentage === 100) {
-          fileHashProgress.status = 'success'
-          uploadFile.info.hash = hash
+        if(percentage < 90) {
+          fileHashProgress.percentage = percentage
         }
+        if(percentage >= 90) {
+          fileHashProgress.percentage = 99
+          uploadFile.info.hash = hash
+        } 
         if(suffix) {
+          fileHashProgress.percentage = 100
+          fileHashProgress.status = 'success'
           uploadFile.info.suffix = suffix
           resolve()
         }
       };
     });
-  }
-  // 计算文件hash
-  const getFileHash = (file) => {
-    return new Promise((resolve) => {
-      const fileReader = new FileReader()
-      fileReader.readAsArrayBuffer(file)
-      fileReader.onload = (ev) => {
-        console.log('load', ev);
-        fileHashProgress.percentage = 100
-        fileHashProgress.status = 'success'
-        const buffer = ev.target.result
-        const spark = new SparkMD5.ArrayBuffer()
-        let hash = null
-        let suffix = null
-        spark.append(buffer)
-        hash = spark.end()
-        suffix = /\.([a-zA-Z0-9]+)$/.exec(file.name)[1]
-        resolve({
-          buffer,
-          hash,
-          suffix,
-          filename: `${hash}.${suffix}`,
-        })
-      }
-      fileReader.onprogress = (ev) => {
-        fileHashProgress.percentage = parseInt(ev.loaded / ev.total * 100)
-      }
-    })
   }
   // 生成切片
   const createChunk = (file, info) => {
@@ -122,8 +107,8 @@ export default function useCommon() {
   return {
     fileHashProgress,
     uploadFile,
+    totalProgress,
     calculateHash,
-    getFileHash,
     getHasUploadChunk,
     createChunk,
     mergeChunk
