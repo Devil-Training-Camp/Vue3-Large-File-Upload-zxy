@@ -3,9 +3,8 @@
     <div>
       <input type="file" @change="handleChange" ref="inputRef" class="input" />
       <el-button type="primary" plain @click="handleSelect">选择文件</el-button>
-      <el-button type="primary" plain @click="handleUpload" :disabled="!uploadFile.data.name">开始上传</el-button>
-      <el-button type="primary" plain @click="handleContinue" :disabled="!isUpload">暂停上传</el-button>
-      <el-button type="primary" plain @click="handleDelete" :disabled="!uploadFile.data.name">清空</el-button>
+      <el-button type="primary" plain @click="handleUpload" :disabled="!uploadFile.data.name || isUpload">开始上传</el-button>
+      <el-button type="primary" plain @click="handleContinue" :disabled="isUpload && totalProgress == 100">暂停上传</el-button>
     </div>
     <div>
       <el-row v-if="uploadFile.data.name">
@@ -85,7 +84,8 @@ const handleSelect = () => {
 // 保存文件
 const handleChange = () => {
   const file = inputRef.value.files
-  if (!file) return
+  console.log('file', file, !file.length)
+  if (!file.length) return
   uploadFile.data = file[0]
 }
 
@@ -96,7 +96,9 @@ const handleUpload = async () => {
   if (!file) return
   isCalHash.value = true
   // 计算文件hash
+  console.log('hash开始计算')
   await calculateHash(file)
+  console.log('hash计算完成')
   // 生成切片
   const chunkList = createChunk(file, info)
   uploadFile.chunkList = chunkList

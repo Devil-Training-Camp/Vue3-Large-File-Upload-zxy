@@ -11,6 +11,7 @@ self.onmessage = e => {
     const reader = new FileReader();
     reader.readAsArrayBuffer(file);
     reader.onload = e => {
+      console.log('onload完成');
       spark.append(e.target.result);
       self.postMessage({
         percentage: 100,
@@ -20,6 +21,9 @@ self.onmessage = e => {
       self.close();
     };
     reader.onprogress = e => {
+      if(e.loaded === e.total) {
+        console.time('进度为100%')
+      }
       self.postMessage({
         percentage: parseInt(e.loaded / e.total * 100),
         hash: spark.end()

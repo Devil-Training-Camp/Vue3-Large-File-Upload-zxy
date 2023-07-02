@@ -7,15 +7,10 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    copy: typeof import('./src/components/UploadFileFormData copy.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCol: typeof import('element-plus/es')['ElCol']
-    ElIcon: typeof import('element-plus/es')['ElIcon']
     ElProgress: typeof import('element-plus/es')['ElProgress']
     ElRow: typeof import('element-plus/es')['ElRow']
-    ElTabPane: typeof import('element-plus/es')['ElTabPane']
-    ElTabs: typeof import('element-plus/es')['ElTabs']
-    IEpDeleteFilled: typeof import('~icons/ep/delete-filled')['default']
     UploadFile: typeof import('./src/components/UploadFile/index.vue')['default']
     UploadFileBase64: typeof import('./src/components/UploadFileBase64.vue')['default']
     UploadFileFormData: typeof import('./src/components/UploadFileFormData.vue')['default']
