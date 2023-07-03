@@ -118,10 +118,13 @@ const uploadChunk = async () => {
   isUpload.value = true
   const requestList = uploadFile.chunkList.map(async (chunk, index) => {
     if (already.includes(chunk.filename)) {
-      uploadFile.progress[index] = {
-        percentage: 100,
-        status: 'success',
-      }
+      const idx = index
+      setTimeout(() => {
+        uploadFile.progress[idx] = {
+          percentage: 100,
+          status: 'success',
+        }
+      }, 100)
       return Promise.resolve()
     }
     const formData = new FormData()
@@ -129,23 +132,26 @@ const uploadChunk = async () => {
     formData.append('filename', chunk.filename)
     const controller = new AbortController()
     cancel[index] = controller
-    return request.post('/upload_chunk', formData, {
-      signal: controller.signal,
-      onUploadProgress: (e) => {
-        const { loaded, total } = e
-        if (uploadFile.progress[index].percentage < parseInt((loaded / total) * 100)) {
-          uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
-        }
-        if (loaded === total) {
-          uploadFile.progress[index].percentage = 100
-          uploadFile.progress[index].status = 'success'
-        }
-      },
-    })
+    try {
+      return request.post('/upload_chunk', formData, {
+        signal: controller.signal,
+        onUploadProgress: (e) => {
+          const { loaded, total } = e
+          if (uploadFile.progress[index].percentage < parseInt((loaded / total) * 100)) {
+            uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
+          }
+          if (loaded === total) {
+            uploadFile.progress[index].percentage = 100
+            uploadFile.progress[index].status = 'success'
+          }
+        },
+      })
+    } catch (e) {}
   })
   const res = await Promise.allSettled(requestList)
   console.log('res', res)
 }
+
 // 暂停上传
 const handlePause = () => {
   if (!isPause.value) {
