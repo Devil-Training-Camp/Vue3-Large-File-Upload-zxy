@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="wrapper">
     <div>
       <input type="file" @change="handleChange" ref="inputRef" class="input" />
       <el-button type="primary" plain @click="handleSelect">选择文件</el-button>
@@ -68,7 +68,6 @@ const inputRef = ref()
 const isCalHash = ref(false) // 是否计算hash
 const isUpload = ref(false) // 是否上传中
 const isPause = ref(false) // 是否暂停中
-let requestList = reactive([])
 const cancel = reactive([])
 
 const { fileHashProgress, uploadFile, totalProgress, calculateHash, getHasUploadChunk, createChunk, mergeChunk } = useCommon()
@@ -115,8 +114,9 @@ const handleUpload = async () => {
 const uploadChunk = async () => {
   // 获取已经上传的切片列表
   const already = await getHasUploadChunk(uploadFile.info.hash)
+  console.log('已经上传切片列表', already)
   isUpload.value = true
-  requestList = uploadFile.chunkList.map(async (chunk, index) => {
+  const requestList = uploadFile.chunkList.map(async (chunk, index) => {
     if (already.includes(chunk.filename)) {
       uploadFile.progress[index] = {
         percentage: 100,
@@ -163,6 +163,10 @@ const handlePause = () => {
 </script>
 
 <style lang="less" scoped>
+.wrapper {
+  min-width: 1200px;
+  overflow-y: none;
+}
 .input {
   display: none;
 }

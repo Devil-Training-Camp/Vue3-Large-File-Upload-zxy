@@ -69,7 +69,6 @@ export default function useCommon() {
   }
   // 获取已经上传的切片列表
   const getHasUploadChunk = async (hash) => {
-    console.log('已经上传切片列表', hash);
     const res = await request.post('/upload_already', 
       {
         HASH: hash,
