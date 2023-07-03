@@ -69,6 +69,7 @@ const isCalHash = ref(false) // 是否计算hash
 const isUpload = ref(false) // 是否上传中
 const isPause = ref(false) // 是否暂停中
 const cancel = reactive([])
+let already = reactive([])
 
 const { fileHashProgress, uploadFile, totalProgress, calculateHash, getHasUploadChunk, createChunk, mergeChunk } = useCommon()
 
@@ -113,43 +114,61 @@ const handleUpload = async () => {
 // 上传切片
 const uploadChunk = async () => {
   // 获取已经上传的切片列表
-  const already = await getHasUploadChunk(uploadFile.info.hash)
+  already = await getHasUploadChunk(uploadFile.info.hash)
   console.log('已经上传切片列表', already)
   isUpload.value = true
-  const requestList = uploadFile.chunkList.map(async (chunk, index) => {
-    if (already.includes(chunk.filename)) {
-      const idx = index
-      setTimeout(() => {
-        uploadFile.progress[idx] = {
-          percentage: 100,
-          status: 'success',
-        }
-      }, 100)
-      return Promise.resolve()
-    }
+  const lists = uploadFile.chunkList.map((chunk, index) => {
     const formData = new FormData()
     formData.append('file', chunk.file)
     formData.append('filename', chunk.filename)
-    const controller = new AbortController()
-    cancel[index] = controller
-    try {
-      return request.post('/upload_chunk', formData, {
-        signal: controller.signal,
-        onUploadProgress: (e) => {
-          const { loaded, total } = e
-          if (uploadFile.progress[index].percentage < parseInt((loaded / total) * 100)) {
-            uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
-          }
-          if (loaded === total) {
-            uploadFile.progress[index].percentage = 100
-            uploadFile.progress[index].status = 'success'
-          }
-        },
-      })
-    } catch (e) {}
+    return {
+      formData,
+      index,
+      filename: chunk.filename,
+    }
   })
-  const res = await Promise.allSettled(requestList)
-  console.log('res', res)
+  const limit = 3
+  const ret = []
+  const executing = []
+  lists.forEach(async (list) => {
+    const task = Promise.resolve().then(() => requestFn(list.formData, list.index, list.filename))
+    ret.push(task)
+    if (limit <= lists.length) {
+      const e = task.then(() => executing.splice(executing.indexOf(e), 1))
+      executing.push(e)
+      if (executing.length >= limit) {
+        await Promise.race(executing)
+      }
+    }
+  })
+  Promise.all(ret)
+}
+
+const requestFn = (formData, index, filename) => {
+  if (already.includes(filename)) {
+    setTimeout(() => {
+      uploadFile.progress[index] = {
+        percentage: 100,
+        status: 'success',
+      }
+    }, 100)
+    return Promise.resolve()
+  }
+  const controller = new AbortController()
+  cancel[index] = controller
+  return request.post('/upload_chunk', formData, {
+    signal: controller.signal,
+    onUploadProgress: (e) => {
+      const { loaded, total } = e
+      if (uploadFile.progress[index].percentage < parseInt((loaded / total) * 100)) {
+        uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
+      }
+      if (loaded === total) {
+        uploadFile.progress[index].percentage = 100
+        uploadFile.progress[index].status = 'success'
+      }
+    },
+  })
 }
 
 // 暂停上传
