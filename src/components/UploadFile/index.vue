@@ -117,43 +117,58 @@ const uploadChunk = async () => {
   already = await getHasUploadChunk(uploadFile.info.hash)
   console.log('已经上传切片列表', already)
   isUpload.value = true
-  const lists = uploadFile.chunkList.map((chunk, index) => {
-    const formData = new FormData()
-    formData.append('file', chunk.file)
-    formData.append('filename', chunk.filename)
-    return {
-      formData,
-      index,
-      filename: chunk.filename,
-    }
-  })
-  const limit = 3
-  const ret = []
-  const executing = []
-  lists.forEach(async (list) => {
-    const task = Promise.resolve().then(() => requestFn(list.formData, list.index, list.filename))
-    ret.push(task)
-    if (limit <= lists.length) {
-      const e = task.then(() => executing.splice(executing.indexOf(e), 1))
-      executing.push(e)
-      if (executing.length >= limit) {
-        await Promise.race(executing)
+  const lists = uploadFile.chunkList
+    .map((chunk, index) => {
+      if (already.includes(chunk.filename)) {
+        const idx = index
+        setTimeout(() => {
+          uploadFile.progress[idx] = {
+            percentage: 100,
+            status: 'success',
+          }
+        }, 100)
+        index = -1
       }
+      const formData = new FormData()
+      formData.append('file', chunk.file)
+      formData.append('filename', chunk.filename)
+      return {
+        formData,
+        index,
+        filename: chunk.filename,
+      }
+    })
+    .filter((list) => list.index !== -1)
+  const addTask = (list) => {
+    const task = requestFn(list.formData, list.index, list.filename)
+    console.log('task', task)
+    pool.push(task)
+    task.then(() => {
+      pool.splice(pool.indexOf(task), 1)
+    })
+  }
+  const run = (hasFinishTask) => {
+    hasFinishTask.then(() => {
+      const list = lists.shift()
+      if (list) {
+        addTask(list)
+        run(Promise.race(pool))
+      }
+    })
+  }
+  const limit = 3
+  const pool = []
+  while (pool.length < limit) {
+    const list = lists.shift()
+    if (list) {
+      addTask(list)
     }
-  })
-  Promise.all(ret)
+  }
+  const hasFinishTask = Promise.race(pool)
+  run(hasFinishTask)
 }
 
-const requestFn = (formData, index, filename) => {
-  if (already.includes(filename)) {
-    setTimeout(() => {
-      uploadFile.progress[index] = {
-        percentage: 100,
-        status: 'success',
-      }
-    }, 100)
-    return Promise.resolve()
-  }
+const requestFn = (formData, index) => {
   const controller = new AbortController()
   cancel[index] = controller
   return request.post('/upload_chunk', formData, {

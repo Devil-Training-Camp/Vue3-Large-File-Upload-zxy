@@ -1,10 +1,9 @@
 import { ref, reactive, computed } from 'vue'
-import SparkMD5 from 'spark-md5'
 import request from '@/utils/request.js'
 
 const fileHashProgress = reactive({
   percentage: 0,
-  status: ''
+  status: '',
 })
 
 const uploadFile = reactive({
@@ -14,44 +13,44 @@ const uploadFile = reactive({
     suffix: '',
   },
   chunkList: [],
-  progress: []
+  progress: [],
 })
 
 const totalProgress = computed(() => {
   const total = uploadFile.progress.length * 100
   let load = 0
-  uploadFile.progress.forEach(item => {
+  uploadFile.progress.forEach((item) => {
     load += item.percentage
   })
-  return parseInt(load / total * 100)
+  return parseInt((load / total) * 100)
 })
 
-const chunkSize = 50 * 1024 * 1024 // 切片大小为50M
+const chunkSize = 5 * 1024 * 1024 // 切片大小为50M
 
 export default function useCommon() {
   // 生成hash
   const calculateHash = (file) => {
     return new Promise((resolve) => {
       // 添加 worker 属性
-      const worker = new Worker("../../../public/hash.js");
-      worker.postMessage(file);
-      worker.onmessage = e => {
-        const { percentage, hash, suffix } = e.data;
-        if(percentage < 90) {
+      const worker = new Worker('../../../public/hash.js')
+      worker.postMessage(file)
+      worker.onmessage = (e) => {
+        const { percentage, hash, suffix } = e.data
+        if (percentage < 90) {
           fileHashProgress.percentage = percentage
         }
-        if(percentage >= 90) {
+        if (percentage >= 90) {
           fileHashProgress.percentage = 99
           uploadFile.info.hash = hash
-        } 
-        if(suffix) {
+        }
+        if (suffix) {
           fileHashProgress.percentage = 100
           fileHashProgress.status = 'success'
           uploadFile.info.suffix = suffix
           resolve()
         }
-      };
-    });
+      }
+    })
   }
   // 生成切片
   const createChunk = (file, info) => {
@@ -69,15 +68,16 @@ export default function useCommon() {
   }
   // 获取已经上传的切片列表
   const getHasUploadChunk = async (hash) => {
-    const res = await request.post('/upload_already', 
+    const res = await request.post(
+      '/upload_already',
       {
         HASH: hash,
       },
       {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    }
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
     )
     if (res.code === 0) {
       return res.data.fileList
@@ -110,6 +110,6 @@ export default function useCommon() {
     calculateHash,
     getHasUploadChunk,
     createChunk,
-    mergeChunk
+    mergeChunk,
   }
 }
