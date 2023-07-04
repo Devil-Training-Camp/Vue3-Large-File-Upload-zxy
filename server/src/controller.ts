@@ -184,7 +184,16 @@ export async function uploadChunk(req: Request, res: Response) {
       })
       return
     }
-
+    // if (Math.random() < 0.5) {
+    //   console.log('请求出错')
+    //   res.statusCode = 500
+    //   res.send({
+    //     code: 1,
+    //     success: false,
+    //     message: 'request error',
+    //   })
+    //   return
+    // }
     await writeFile(pt, file, true)
 
     res.send({

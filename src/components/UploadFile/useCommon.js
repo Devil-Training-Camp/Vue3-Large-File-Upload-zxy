@@ -25,7 +25,7 @@ const totalProgress = computed(() => {
   return parseInt((load / total) * 100)
 })
 
-const chunkSize = 5 * 1024 * 1024 // 切片大小为50M
+const chunkSize = 50 * 1024 * 1024 // 切片大小为50M
 
 export default function useCommon() {
   // 生成hash

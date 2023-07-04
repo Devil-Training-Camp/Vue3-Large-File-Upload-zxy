@@ -61,17 +61,23 @@
 
 <script setup>
 import request from '@/utils/request.js'
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import useCommon from './useCommon.js'
 
 const inputRef = ref()
 const isCalHash = ref(false) // 是否计算hash
 const isUpload = ref(false) // 是否上传中
 const isPause = ref(false) // 是否暂停中
-const cancel = reactive([])
-let already = reactive([])
+let cancel = reactive([])
+const uploadMax = ref(3)
 
 const { fileHashProgress, uploadFile, totalProgress, calculateHash, getHasUploadChunk, createChunk, mergeChunk } = useCommon()
+
+watch(totalProgress, (newValue) => {
+  if (newValue === 100) {
+    mergeChunk()
+  }
+})
 
 // 选择文件
 const handleSelect = () => {
@@ -114,8 +120,7 @@ const handleUpload = async () => {
 // 上传切片
 const uploadChunk = async () => {
   // 获取已经上传的切片列表
-  already = await getHasUploadChunk(uploadFile.info.hash)
-  console.log('已经上传切片列表', already)
+  const already = await getHasUploadChunk(uploadFile.info.hash)
   isUpload.value = true
   const lists = uploadFile.chunkList
     .map((chunk, index) => {
@@ -139,33 +144,10 @@ const uploadChunk = async () => {
       }
     })
     .filter((list) => list.index !== -1)
-  const addTask = (list) => {
-    const task = requestFn(list.formData, list.index, list.filename)
-    console.log('task', task)
-    pool.push(task)
-    task.then(() => {
-      pool.splice(pool.indexOf(task), 1)
-    })
+  if (lists.length === 0) {
+    return
   }
-  const run = (hasFinishTask) => {
-    hasFinishTask.then(() => {
-      const list = lists.shift()
-      if (list) {
-        addTask(list)
-        run(Promise.race(pool))
-      }
-    })
-  }
-  const limit = 3
-  const pool = []
-  while (pool.length < limit) {
-    const list = lists.shift()
-    if (list) {
-      addTask(list)
-    }
-  }
-  const hasFinishTask = Promise.race(pool)
-  run(hasFinishTask)
+  sendRequest(lists)
 }
 
 const requestFn = (formData, index) => {
@@ -178,11 +160,51 @@ const requestFn = (formData, index) => {
       if (uploadFile.progress[index].percentage < parseInt((loaded / total) * 100)) {
         uploadFile.progress[index].percentage = parseInt((loaded / total) * 100)
       }
-      if (loaded === total) {
-        uploadFile.progress[index].percentage = 100
-        uploadFile.progress[index].status = 'success'
-      }
     },
+  })
+}
+
+// 并发处理
+const sendRequest = (lists) => {
+  let finish = 0
+  const total = lists.length
+  const retryArr = []
+  return new Promise((resolve, reject) => {
+    const handler = () => {
+      if (isPause.value) return
+      if (lists.length) {
+        const list = lists.shift()
+        const { formData, index } = list
+        requestFn(formData, index)
+          .then(() => {
+            uploadFile.progress[index].percentage = 100
+            uploadFile.progress[index].status = 'success'
+            finish++
+            handler()
+          })
+          .catch(() => {
+            uploadFile.progress[index].status = 'warning'
+            if (typeof retryArr[list.index] !== 'number') {
+              retryArr[index] = 0
+            }
+            retryArr[index]++
+            if (retryArr[index] >= 3) {
+              uploadFile.progress[index].status = 'exception'
+              return reject(`切片${index + 1}上传失败`)
+            }
+            uploadMax.value++
+            lists.push(list)
+            if (isPause.value) return
+            handler()
+          })
+      }
+      if (finish >= total) {
+        resolve('上传完成')
+      }
+    }
+    for (let i = 0; i < uploadMax.value; i++) {
+      handler()
+    }
   })
 }
 
@@ -192,9 +214,11 @@ const handlePause = () => {
     cancel.forEach((c) => {
       c.abort()
     })
+    cancel = []
     isPause.value = true
     console.log('暂停上传')
   } else {
+    uploadMax.value = 3
     isPause.value = false
     uploadChunk()
     console.log('继续上传')

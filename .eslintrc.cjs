@@ -33,6 +33,7 @@ module.exports = {
     'vue/multi-word-component-names': 'off',
     'vue/require-default-prop': 'off',
     '@typescript-eslint/no-empty-function': 'off',
-    'no-unmodified-loop-condition': 'off'
+    'no-unmodified-loop-condition': 'off',
+    'prefer-promise-reject-errors': 'off'
   },
 }

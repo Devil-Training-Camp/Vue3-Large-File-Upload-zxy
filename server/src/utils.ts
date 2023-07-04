@@ -9,8 +9,7 @@ export function useMultiParty(req: Request, auto?: boolean) {
     maxFieldsSize: MAX_SIZE,
   }
 
-  if (auto)
-    config.uploadDir = UPLOAD_DIR
+  if (auto) config.uploadDir = UPLOAD_DIR
 
   return new Promise<{
     fields: any
@@ -42,7 +41,6 @@ export function isExists(p) {
 export function extractExt(filename) {
   return filename.slice(filename.lastIndexOf('.'), filename.length)
 }
-
 export function writeFile(path, file, stream?: boolean) {
   return new Promise<void>((resolve, reject) => {
     if (stream) {
@@ -58,13 +56,11 @@ export function writeFile(path, file, stream?: boolean) {
 
       return
     }
-
     fs.writeFile(path, file, (err) => {
       if (err) {
         reject(err)
         return
       }
-
       resolve()
     })
   })
